@@ -3,12 +3,17 @@
 version = 3
 
 [[package]]
-name = "image"
+name = "console"
 version = "0.1.0"
 dependencies = [
  "parse_args",
+ "rs_image",
 ]
 
 [[package]]
 name = "parse_args"
+version = "0.1.0"
+
+[[package]]
+name = "rs_image"
 version = "0.1.0"
