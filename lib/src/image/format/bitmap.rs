@@ -1,8 +1,6 @@
-use crate::{color, image, utility};
+use crate::{color, image, utility, convert::ConvertableFrom};
 use image::Image;
 use utility::FromBitSlice;
-
-use super::ConvertableFrom;
 
 ///
 /// A image in bmp format.
@@ -516,10 +514,10 @@ impl ConvertableFrom<Bitmap> for Image {
 
         //For each row
         for r in 0..abs_height {
-            //If height is negative, the image is mirrored horizontally
+            //If height is non-negative, the image is mirrored horizontally
             let j = match height {
-                h if h < 0 => (abs_height - 1) - r,
-                _ => r
+                h if h < 0 => r,
+                _ => (abs_height - 1) - r
             };
 
             //For each column
@@ -546,8 +544,8 @@ impl ConvertableFrom<Bitmap> for Image {
         }
 
         Ok(Image {
-            width: abs_width,
-            height: abs_height,
+            width: abs_width as usize,
+            height: abs_height as usize,
             pixels
         })
     }

@@ -5,13 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(Windows) Launch",
+            "name": "Console",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/target/debug/${workspaceFolderBasename}.exe",
+            "program": "${workspaceFolder}/target/debug/console.exe",
             "preLaunchTask": "rust: cargo build",
             "args": [
-                "/path:input/bmp/img27.bmp"
+                "/path:input/bmp/img27.bmp",
+                "/output:draw"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -23,6 +24,5 @@
             ],
             "console": "integratedTerminal"
         }
-        
     ]
 }

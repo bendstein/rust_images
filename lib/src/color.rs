@@ -1,3 +1,5 @@
+pub mod conversion;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct RGBA {
     pub red: u8,
@@ -28,4 +30,82 @@ pub struct HSVA {
     pub s: f32,
     pub v: f32,
     pub alpha: u8
+}
+
+fn distance_euclidean(a: (f32, f32, f32), b: (f32, f32, f32)) -> f32 {
+    f32::sqrt(
+        (a.0 - b.0).powi(2)
+        + (a.1 - b.1).powi(2)
+        + (a.2 - b.2).powi(2)
+    )
+}
+
+fn distance_manhattan(a: (f32, f32, f32), b: (f32, f32, f32)) -> f32 {
+    (a.0 - b.0).abs()
+    + (a.1 - b.1).abs()
+    + (a.2 - b.2).abs()
+}
+
+impl RGBA {
+    pub fn distance_euclidean(&self, other: &Self) -> f32 {
+        distance_euclidean(
+            (self.red as f32, self.blue as f32, self.green as f32), 
+            (other.red as f32, other.blue as f32, other.green as f32)
+        )
+    }
+
+    pub fn distance_manhattan(&self, other: &Self) -> f32 {
+        distance_manhattan(
+            (self.red as f32, self.blue as f32, self.green as f32), 
+            (other.red as f32, other.blue as f32, other.green as f32)
+        )
+    }
+}
+
+impl XYZA {
+    pub fn distance_euclidean(&self, other: &Self) -> f32 {
+        distance_euclidean(
+            (self.x, self.y, self.z), 
+            (other.x, other.y, other.z)
+        )
+    }
+
+    pub fn distance_manhattan(&self, other: &Self) -> f32 {
+        distance_manhattan(
+            (self.x, self.y, self.z), 
+            (other.x, other.y, other.z)
+        )
+    }
+}
+
+impl LABA {
+    pub fn distance_euclidean(&self, other: &Self) -> f32 {
+        distance_euclidean(
+            (self.l, self.a, self.b), 
+            (other.l, other.a, other.b)
+        )
+    }
+
+    pub fn distance_manhattan(&self, other: &Self) -> f32 {
+        distance_manhattan(
+            (self.l, self.a, self.b), 
+            (other.l, other.a, other.b)
+        )
+    }
+}
+
+impl HSVA {
+    pub fn distance_euclidean(&self, other: &Self) -> f32 {
+        distance_euclidean(
+            (self.h, self.s, self.v), 
+            (other.h, other.s, other.v)
+        )
+    }
+
+    pub fn distance_manhattan(&self, other: &Self) -> f32 {
+        distance_manhattan(
+            (self.h, self.s, self.v), 
+            (other.h, other.s, other.v)
+        )
+    }
 }
