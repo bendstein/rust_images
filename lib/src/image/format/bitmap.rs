@@ -229,7 +229,7 @@ impl TryFrom<Vec<u8>> for Bitmap {
         let palette: Option<Vec<color::RGBA>> = if color_table_length > 0 {
             let color_table_raw = get_next_bytes(&value, &mut offset, color_table_length);
 
-            //Each color in the pallette is 4 bytes, the first 3 representing the Blue, Green and Red intensities respectively, with the last unused
+            //Each color in the pallette is 4 bytes, the first 3 representing the Blue, Green and Red intensities respectively, with the last unused or alpha
             Some(
                 color_table_raw
                     .chunks(4)
@@ -237,7 +237,7 @@ impl TryFrom<Vec<u8>> for Bitmap {
                         blue: *chunk.first().unwrap_or(&0),
                         green: *chunk.get(1).unwrap_or(&0),
                         red: *chunk.get(2).unwrap_or(&0),
-                        alpha: 0xFF,
+                        alpha: *chunk.get(3).unwrap_or(&0),
                     })
                     .collect(),
             )
@@ -332,11 +332,12 @@ impl TryFrom<Vec<u8>> for Bitmap {
 
                 //Get the scanline data
                 let scanline = get_next_bytes(&value, &mut offset, count);
+                let mut line: Vec<color::RGBA> = Vec::new();
 
                 // Loop over each chunk of 3/4 bytes in the scanline, ignoring 0-padding at the end of the scanline.
                 scanline.chunks(bytesperpixel).for_each(|chunk| {
                     //Ignore 0-padding
-                    if chunk.len() == bytesperpixel {
+                    if chunk.len() == bytesperpixel && (line.len() as u32) < info_header.width.unsigned_abs() {
                         //Extract alpha, blue, green, and red from their respective bytes
                         let color = color::RGBA {
                             blue: *chunk.first().unwrap_or(&0),
@@ -348,9 +349,12 @@ impl TryFrom<Vec<u8>> for Bitmap {
                             },
                         };
 
-                        pixel_values.push(color);
+                        line.push(color);
                     }
                 });
+
+                //Append the scanline
+                pixel_values.append(&mut line);
 
                 if done {
                     break;
@@ -434,22 +438,19 @@ impl TryFrom<Bitmap> for Vec<u8> {
                 }
             },
             BitmapPixelData::Colors(ref colors) => {
+                let bytes_per_pixel = f32::ceil((value.info_header.bit_depth as f32) / 8_f32) as usize;
+
                 for scanline in colors.chunks_exact(width) {
                     let mut bytes: Vec<u8> = Vec::new();
 
-                    if value.info_header.bit_depth == 24 {
-                        for color in scanline {
-                            let mut color_bytes = Vec::from((((color.red as u32) << 16) + ((color.green as u32) << 8) 
-                                + (color.blue as u32)).to_le_bytes());
-                            bytes.append(&mut color_bytes);
-                        }
-                    }
-                    else {
-                        for color in scanline {
-                            let mut color_bytes = Vec::from((((color.alpha as u32) << 24) + ((color.red as u32) << 16)
-                                + ((color.green as u32) << 8) + (color.blue as u32)).to_le_bytes());
-                            bytes.append(&mut color_bytes);
-                        }
+                    for color in scanline {
+                        let color_u32 = ((color.alpha as u32) << 24)
+                            + ((color.red as u32) << 16)
+                            + ((color.green as u32) << 8)
+                            + (color.blue as u32);
+                        let mut color_bytes = Vec::from(color_u32.to_le_bytes());
+                        color_bytes.truncate(bytes_per_pixel);
+                        bytes.append(&mut color_bytes);
                     }
 
                     //Pad row to a multiple of 4 bytes
