@@ -41,12 +41,16 @@ pub fn round_to_next_multiple_of_4(value: i32) -> usize {
 }
 
 pub mod file {
-    use std::fs::File;
+    use std::fs;
+    use fs::File;
+    use std::path;
     use std::io::{Read, BufReader, Write};
 
     pub fn get_file_bytes(path: &str) -> Result<Vec<u8>, std::io::Error> {
+        let file_path = path::Path::new(path);
+
         //Open the file
-        let fs = File::open(path)?;
+        let fs = File::open(file_path)?;
     
         //Read file to buffer
         let mut br = BufReader::new(fs);
@@ -58,6 +62,13 @@ pub mod file {
     }
 
     pub fn write_file_bytes(path: &str, bytes: &[u8]) -> Result<(), std::io::Error> {
+        let file_path = path::Path::new(path);
+
+        //Create directory if necessary
+        if let Some(parent_dir) = file_path.parent() {
+            fs::create_dir_all(parent_dir)?;
+        }
+        
         let mut file = File::create(path)?;
         file.write_all(bytes)
     }

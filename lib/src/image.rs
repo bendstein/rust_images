@@ -6,7 +6,7 @@ use super::color;
 pub struct Image {
     pub width: usize,
     pub height: usize,
-    pub pixels: Vec<color::RGBA>
+    pub pixels: Vec<color::ARGB>
 }
 
 impl Image {
@@ -20,10 +20,10 @@ impl Image {
     }
 
     fn calculate_index(&self, i: usize, j: usize) -> usize {
-        self.width * (self.height - j - 1) + i
+        self.width * j + i
     }
 
-    pub fn get(&self, i: usize, j: usize) -> Option<color::RGBA> {
+    pub fn get(&self, i: usize, j: usize) -> Option<color::ARGB> {
         let index = self.calculate_index(i, j);
 
         if index > self.pixels.capacity() {
@@ -34,7 +34,7 @@ impl Image {
         }
     }
 
-    pub fn set(&mut self, value: color::RGBA, i: usize, j: usize) {
+    pub fn set(&mut self, value: color::ARGB, i: usize, j: usize) {
         let index = self.calculate_index(i, j);
         self.pixels[index] = value;
     }

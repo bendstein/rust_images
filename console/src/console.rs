@@ -3,7 +3,7 @@ use colored::Colorize;
 use unicode_segmentation::UnicodeSegmentation;
 use rs_image::{color, image};
 
-pub struct DrawImageToConsoleSettings {
+pub struct WriteImageToConsoleSettings {
     ///
     /// Whether to use truecolor when drawing
     /// to console.
@@ -16,7 +16,7 @@ pub struct DrawImageToConsoleSettings {
     pub pixels: Vec<String>,
 }
 
-impl DrawImageToConsoleSettings {
+impl WriteImageToConsoleSettings {
     fn pixel_width(&self) -> usize {
         if self.pixels.is_empty() {
             0_usize
@@ -44,7 +44,7 @@ impl DrawImageToConsoleSettings {
     }
 }
 
-pub fn draw_image_to_console(img: image::Image, settings: &DrawImageToConsoleSettings) {
+pub fn write_image_to_console(img: image::Image, settings: &WriteImageToConsoleSettings) {
     let _ = colored::control::set_virtual_terminal(true);
 
     //Write some top padding
@@ -81,7 +81,7 @@ pub fn draw_image_to_console(img: image::Image, settings: &DrawImageToConsoleSet
     }
 }
 
-fn get_pixel_string_from_opacity(color: color::RGBA, settings: &DrawImageToConsoleSettings) -> String {
+fn get_pixel_string_from_opacity(color: color::ARGB, settings: &WriteImageToConsoleSettings) -> String {
     let pixel_width = settings.pixel_width();
 
     if pixel_width == 0 {
@@ -119,7 +119,7 @@ fn get_pixel_string_from_opacity(color: color::RGBA, settings: &DrawImageToConso
     }
 }
 
-fn get_coloring(color: color::RGBA, settings: &DrawImageToConsoleSettings) -> Option<colored::Color> {
+fn get_coloring(color: color::ARGB, settings: &WriteImageToConsoleSettings) -> Option<colored::Color> {
     if color.alpha == 0 {
         None
     }
@@ -129,31 +129,28 @@ fn get_coloring(color: color::RGBA, settings: &DrawImageToConsoleSettings) -> Op
     else {
         let default_color = 0x00000000;
         let simple_colors: HashMap<u32, colored::Color> = HashMap::from([
-            (0x00000000, colored::Color::Black), //Black
-            (0x00008000, colored::Color::Blue), //Dark blue
-            (0x00800000, colored::Color::Green), //Dark green
-            (0x00808000, colored::Color::Cyan), //Cark cyan
-            (0x80000000, colored::Color::Red), //Dark red
-            (0x80008000, colored::Color::Magenta), //Dark magenta
-            (0x80800000, colored::Color::Yellow), //Dark yellow
-            (0x80808000, colored::Color::White), //Dark grey
-            (0x0000FF00, colored::Color::BrightBlue), //Blue
-            (0x00FF0000, colored::Color::BrightGreen), //Green
-            (0x00FFFF00, colored::Color::BrightCyan), //Cyan
-            (0xFF000000, colored::Color::BrightRed), //Red
-            (0xFF00FF00, colored::Color::BrightMagenta), //Magenta
-            (0xFFFF0000, colored::Color::BrightYellow), //Yellow
-            (0xC0C0C000, colored::Color::BrightBlack), //Grey
-            (0xFFFFFF00, colored::Color::BrightWhite) //White
+            (0x000000, colored::Color::Black), //Black
+            (0x000080, colored::Color::Blue), //Dark blue
+            (0x008000, colored::Color::Green), //Dark green
+            (0x008080, colored::Color::Cyan), //Cark cyan
+            (0x800000, colored::Color::Red), //Dark red
+            (0x800080, colored::Color::Magenta), //Dark magenta
+            (0x808000, colored::Color::Yellow), //Dark yellow
+            (0x808080, colored::Color::White), //Dark grey
+            (0x0000FF, colored::Color::BrightBlue), //Blue
+            (0x00FF00, colored::Color::BrightGreen), //Green
+            (0x00FFFF, colored::Color::BrightCyan), //Cyan
+            (0xFF0000, colored::Color::BrightRed), //Red
+            (0xFF00FF, colored::Color::BrightMagenta), //Magenta
+            (0xFFFF00, colored::Color::BrightYellow), //Yellow
+            (0xC0C0C0, colored::Color::BrightBlack), //Grey
+            (0xFFFFFF, colored::Color::BrightWhite) //White
         ]);
 
         let (hex, _) = simple_colors.keys()
-            .map(|k| (k, color::RGBA {
-                    red: ((k >> 24) & 0xFF) as u8,
-                    green: ((k >> 16) & 0xFF) as u8,
-                    blue: ((k >> 8) & 0xFF) as u8,
-                    alpha: color.alpha,
-                }.distance_euclidean(&color)))
+            .map(|k| (k, color::ARGB::from_u32(*k, false)
+                .with_alpha(color.alpha)
+                .distance_euclidean(&color)))
             .reduce(|(hex_a, distance_a), (hex_b, distance_b)| {
                 if distance_a <= distance_b {
                     (hex_a, distance_a)

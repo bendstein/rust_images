@@ -43,6 +43,7 @@ pub mod args {
     pub mod values {
         pub mod output_type {
             pub const FILE: &str = "file";
+            pub const OUTPUT: &str = "output";
             pub const DRAW: &str = "draw";
         }
     }
@@ -82,7 +83,7 @@ pub mod env {
 ///
 /// Constants for drawing to console
 /// 
-pub mod draw_to_console {
+pub mod write_to_console {
     ///
     /// Strings to use to represent a pixel in the console
     /// 

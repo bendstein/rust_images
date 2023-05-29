@@ -5,11 +5,11 @@ pub struct LABSettings {
     refs: (f32, f32, f32)
 }
 
-impl ConvertableFrom<RGBA> for XYZA {
+impl ConvertableFrom<ARGB> for AXYZ {
     type Error = ();
     type Options = ();
 
-    fn try_convert_from(value: RGBA, _: Self::Options) -> Result<Self, Self::Error> {
+    fn try_convert_from(value: ARGB, _: Self::Options) -> Result<Self, Self::Error> {
         fn adj(channel: f32) -> f32 {
             let scaled = channel / 255_f32;
             if scaled > 0.04045 {
@@ -33,39 +33,39 @@ impl ConvertableFrom<RGBA> for XYZA {
     }
 }
 
-impl ConvertableFrom<RGBA> for LABA {
+impl ConvertableFrom<ARGB> for ALAB {
     type Error = ();
     type Options = LABSettings;
 
-    fn try_convert_from(value: RGBA, options: Self::Options) -> Result<Self, Self::Error> {
-        let xyz = XYZA::try_convert_from(value, ())?;
+    fn try_convert_from(value: ARGB, options: Self::Options) -> Result<Self, Self::Error> {
+        let xyz = AXYZ::try_convert_from(value, ())?;
         Self::try_convert_from(xyz, options)
     }
 }
 
-impl ConvertableFrom<RGBA> for HSVA {
+impl ConvertableFrom<ARGB> for AHSV {
     type Error = ();
     type Options = ();
 
-    fn try_convert_from(_value: RGBA, _: Self::Options) -> Result<Self, Self::Error> {
+    fn try_convert_from(_value: ARGB, _: Self::Options) -> Result<Self, Self::Error> {
         todo!();
     }
 }
 
-impl ConvertableFrom<XYZA> for RGBA {
+impl ConvertableFrom<AXYZ> for ARGB {
     type Error = ();
     type Options = ();
 
-    fn try_convert_from(_value: XYZA, _: Self::Options) -> Result<Self, Self::Error> {
+    fn try_convert_from(_value: AXYZ, _: Self::Options) -> Result<Self, Self::Error> {
         todo!();
     }
 }
 
-impl ConvertableFrom<XYZA> for LABA {
+impl ConvertableFrom<AXYZ> for ALAB {
     type Error = ();
     type Options = LABSettings;
 
-    fn try_convert_from(value: XYZA, options: Self::Options) -> Result<Self, Self::Error> {
+    fn try_convert_from(value: AXYZ, options: Self::Options) -> Result<Self, Self::Error> {
         fn adj(channel: f32) -> f32 {
             if channel > 0.008856 {
                 channel.powf(1_f32 / 3_f32)
@@ -88,65 +88,65 @@ impl ConvertableFrom<XYZA> for LABA {
     }
 }
 
-impl ConvertableFrom<XYZA> for HSVA {
+impl ConvertableFrom<AXYZ> for AHSV {
     type Error = ();
     type Options = ();
 
-    fn try_convert_from(_value: XYZA, _: Self::Options) -> Result<Self, Self::Error> {
+    fn try_convert_from(_value: AXYZ, _: Self::Options) -> Result<Self, Self::Error> {
         todo!();
     }
 }
 
-impl ConvertableFrom<LABA> for RGBA {
+impl ConvertableFrom<ALAB> for ARGB {
     type Error = ();
     type Options = LABSettings;
 
-    fn try_convert_from(_value: LABA, _options: Self::Options) -> Result<Self, Self::Error> {
+    fn try_convert_from(_value: ALAB, _options: Self::Options) -> Result<Self, Self::Error> {
         todo!();
     }
 }
 
-impl ConvertableFrom<LABA> for XYZA {
+impl ConvertableFrom<ALAB> for AXYZ {
     type Error = ();
     type Options = LABSettings;
 
-    fn try_convert_from(_value: LABA, _options: Self::Options) -> Result<Self, Self::Error> {
+    fn try_convert_from(_value: ALAB, _options: Self::Options) -> Result<Self, Self::Error> {
         todo!();
     }
 }
 
-impl ConvertableFrom<LABA> for HSVA {
+impl ConvertableFrom<ALAB> for AHSV {
     type Error = ();
     type Options = LABSettings;
 
-    fn try_convert_from(_value: LABA, _options: Self::Options) -> Result<Self, Self::Error> {
+    fn try_convert_from(_value: ALAB, _options: Self::Options) -> Result<Self, Self::Error> {
         todo!();
     }
 }
 
-impl ConvertableFrom<HSVA> for RGBA {
+impl ConvertableFrom<AHSV> for ARGB {
     type Error = ();
     type Options = ();
 
-    fn try_convert_from(_value: HSVA, _: Self::Options) -> Result<Self, Self::Error> {
+    fn try_convert_from(_value: AHSV, _: Self::Options) -> Result<Self, Self::Error> {
         todo!();
     }
 }
 
-impl ConvertableFrom<HSVA> for XYZA {
+impl ConvertableFrom<AHSV> for AXYZ {
     type Error = ();
     type Options = ();
 
-    fn try_convert_from(_value: HSVA, _: Self::Options) -> Result<Self, Self::Error> {
+    fn try_convert_from(_value: AHSV, _: Self::Options) -> Result<Self, Self::Error> {
         todo!();
     }
 }
 
-impl ConvertableFrom<HSVA> for LABA {
+impl ConvertableFrom<AHSV> for ALAB {
     type Error = ();
     type Options = LABSettings;
 
-    fn try_convert_from(_value: HSVA, _options: Self::Options) -> Result<Self, Self::Error> {
+    fn try_convert_from(_value: AHSV, _options: Self::Options) -> Result<Self, Self::Error> {
         todo!();
     }
 }

@@ -124,7 +124,7 @@ pub struct BitmapInfoHeader {
 ///
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct BitmapColorTable {
-    pub colors: Vec<color::RGBA>,
+    pub colors: Vec<color::ARGB>,
 }
 
 ///
@@ -133,7 +133,7 @@ pub struct BitmapColorTable {
 /// 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BitmapPixelData {
-    Colors(Vec<color::RGBA>),
+    Colors(Vec<color::ARGB>),
     Indices(Vec<u8>)
 }
 
@@ -230,14 +230,14 @@ impl TryFrom<Vec<u8>> for Bitmap {
             )),
         }?;
 
-        let palette: Option<Vec<color::RGBA>> = if color_table_length > 0 {
+        let palette: Option<Vec<color::ARGB>> = if color_table_length > 0 {
             let color_table_raw = get_next_bytes(&value, &mut offset, color_table_length);
 
             //Each color in the pallette is 4 bytes, the first 3 representing the Blue, Green and Red intensities respectively, with the last unused or alpha
             Some(
                 color_table_raw
                     .chunks(4)
-                    .map(|chunk| color::RGBA {
+                    .map(|chunk| color::ARGB {
                         blue: *chunk.first().unwrap_or(&0),
                         green: *chunk.get(1).unwrap_or(&0),
                         red: *chunk.get(2).unwrap_or(&0),
@@ -314,7 +314,7 @@ impl TryFrom<Vec<u8>> for Bitmap {
         //bpp = 24: value of each pixel is 3 bytes, representing Blue, Green and Red intensities respectively
         //bpp = 32: value of each pixel is 4 bytes, representing Alpha, Blue, Green and Red intensities respectively
         else if [24, 32].contains(&info_header.bit_depth) {
-            let mut pixel_values: Vec<color::RGBA> = Vec::new();
+            let mut pixel_values: Vec<color::ARGB> = Vec::new();
 
             //Get scanline width based on line width
             let bytesperpixel = f32::ceil((info_header.bit_depth as f32) / 8_f32) as usize;
@@ -336,14 +336,14 @@ impl TryFrom<Vec<u8>> for Bitmap {
 
                 //Get the scanline data
                 let scanline = get_next_bytes(&value, &mut offset, count);
-                let mut line: Vec<color::RGBA> = Vec::new();
+                let mut line: Vec<color::ARGB> = Vec::new();
 
                 // Loop over each chunk of 3/4 bytes in the scanline, ignoring 0-padding at the end of the scanline.
                 scanline.chunks(bytesperpixel).for_each(|chunk| {
                     //Ignore 0-padding
                     if chunk.len() == bytesperpixel && (line.len() as u32) < info_header.width.unsigned_abs() {
                         //Extract alpha, blue, green, and red from their respective bytes
-                        let color = color::RGBA {
+                        let color = color::ARGB {
                             blue: *chunk.first().unwrap_or(&0),
                             green: *chunk.get(1).unwrap_or(&0),
                             red: *chunk.get(2).unwrap_or(&0),
@@ -496,7 +496,7 @@ impl ConvertableFrom<Image> for Bitmap {
     fn try_convert_from(value: Image, options: Self::Options) -> Result<Self, Self::Error> {
         
         let mut color_table: HashMap<u32, u8> = HashMap::new();
-        let mut color_table_colors: Vec<color::RGBA> = Vec::new();
+        let mut color_table_colors: Vec<color::ARGB> = Vec::new();
 
         let pixels: BitmapPixelData = if [1, 4, 8].contains(&options.bit_depth) {
             //For bit depth of 1, 4, or 8, construct the color table and set pixels to be indices into the color table
@@ -518,7 +518,7 @@ impl ConvertableFrom<Image> for Bitmap {
         }
         else {
             //For any other bit depth, the color table isn't necessary, and the pixel data will be the literal RGB(A) values
-            let mut img_pixels: Vec<color::RGBA> = Vec::new();
+            let mut img_pixels: Vec<color::ARGB> = Vec::new();
 
             //Loop over each row
             for r in 0..value.height {
@@ -587,7 +587,7 @@ impl ConvertableFrom<Bitmap> for Image {
         let abs_width = width.unsigned_abs();
         let abs_height = height.unsigned_abs();
 
-        let mut pixels: Vec<color::RGBA> = Vec::new();
+        let mut pixels: Vec<color::ARGB> = Vec::new();
 
         //For each row
         for r in 0..abs_height {

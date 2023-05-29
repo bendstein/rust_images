@@ -3,7 +3,7 @@ mod output_type;
 mod console;
 
 use std::{collections::HashMap, time::SystemTime};
-use console::DrawImageToConsoleSettings;
+use console::WriteImageToConsoleSettings;
 use parse_args::argparser;
 use rs_image::{*, convert::ConvertableFrom};
 use image::format::bitmap::Bitmap;
@@ -32,6 +32,9 @@ fn main() -> Result<(), String> {
     else if output_type_arg == *constants::args::values::output_type::DRAW {
         OutputType::DrawToConsole
     }
+    else if output_type_arg == *constants::args::values::output_type::OUTPUT {
+        OutputType::OutputToConsole
+    }
     else {
         OutputType::default()
     };
@@ -39,6 +42,8 @@ fn main() -> Result<(), String> {
     //Get image file path from args
     let file_path = args.get(constants::args::keys::FILE_PATH)
         .map_or_else(|| Err(format!("Missing required argument: '{}'.", constants::args::keys::FILE_PATH)), Ok)?;
+
+    println!("Path: {file_path}");
 
     //Get image file bytes
     let bytes = rs_image::utility::file::get_file_bytes(file_path)
@@ -73,7 +78,7 @@ fn main() -> Result<(), String> {
 
             Ok(())
         },
-        OutputType::DrawToConsole => {
+        OutputType::OutputToConsole => {
             let truecolor_disabled_arg = args.get(constants::args::keys::FORCE_DISABLE_TRUECOLOR)
                 .map_or("", |v| v.as_str());
 
@@ -86,24 +91,22 @@ fn main() -> Result<(), String> {
 
             let img = image::Image::try_convert_from(bitmap, ())?;
 
-            let bmp = Bitmap::try_convert_from(img, image::format::bitmap::BitmapConvertData {
-                bit_depth: 24,
-                compression: 0
-            })?;
-
-            let img = image::Image::try_convert_from(bmp, ())?;
-
-            let pixels: Vec<String> = constants::draw_to_console::PIXEL_STRINGS
-                .split(constants::draw_to_console::PIXEL_STRINGS_DELIMITER)
+            let pixels: Vec<String> = constants::write_to_console::PIXEL_STRINGS
+                .split(constants::write_to_console::PIXEL_STRINGS_DELIMITER)
                 .map(String::from)
                 .collect();
 
-            console::draw_image_to_console(img, &DrawImageToConsoleSettings {
+            console::write_image_to_console(img, &WriteImageToConsoleSettings {
                 use_truecolor: truecolor_enabled,
                 pixels
             });
 
+            println!();
+
             Ok(())
+        },
+        OutputType::DrawToConsole => {
+            todo!();
         }
     }
 }

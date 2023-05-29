@@ -1,7 +1,7 @@
 pub mod conversion;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub struct RGBA {
+pub struct ARGB {
     pub red: u8,
     pub green: u8,
     pub blue: u8,
@@ -9,7 +9,7 @@ pub struct RGBA {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
-pub struct XYZA {
+pub struct AXYZ {
     pub x: f32,
     pub y: f32,
     pub z: f32,
@@ -17,7 +17,7 @@ pub struct XYZA {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
-pub struct LABA {
+pub struct ALAB {
     pub l: f32,
     pub a: f32,
     pub b: f32,
@@ -25,7 +25,7 @@ pub struct LABA {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
-pub struct HSVA {
+pub struct AHSV {
     pub h: f32,
     pub s: f32,
     pub v: f32,
@@ -61,7 +61,26 @@ fn as_u32(v: (u8, u8, u8, u8), little_endian: bool) -> u32 {
     }
 }
 
-impl RGBA {
+fn from_u32(n: u32, little_endian: bool) -> (u8, u8, u8, u8) {
+    if little_endian {
+        (
+            (n & 0xFF) as u8,
+            ((n >> 8) & 0xFF) as u8,
+            ((n >> 16) & 0xFF) as u8,
+            ((n >> 24) & 0xFF) as u8
+        )
+    }
+    else {
+        (
+            ((n >> 24) & 0xFF) as u8,
+            ((n >> 16) & 0xFF) as u8,
+            ((n >> 8) & 0xFF) as u8,
+            (n & 0xFF) as u8
+        )
+    }
+}
+
+impl ARGB {
     pub fn distance_euclidean(&self, other: &Self) -> f32 {
         distance_euclidean(
             (self.red as f32, self.blue as f32, self.green as f32), 
@@ -79,9 +98,67 @@ impl RGBA {
     pub fn as_u32(&self, little_endian: bool) -> u32 {
         as_u32((self.alpha, self.red, self.green, self.blue), little_endian)
     }
+
+    pub fn from_u32(n: u32, little_endian: bool) -> Self {
+        let v = from_u32(n, little_endian);
+        Self {
+            alpha: v.0,
+            red: v.1,
+            green: v.2,
+            blue: v.3
+        }
+    }
+
+    pub fn with_alpha(&self, alpha: u8) -> Self {
+        Self {
+            alpha,
+            red: self.red,
+            green: self.green,
+            blue: self.blue
+        }
+    }
+
+    pub fn with_red(&self, red: u8) -> Self {
+        Self {
+            alpha: self.alpha,
+            red,
+            green: self.green,
+            blue: self.blue
+        }
+    }
+
+    pub fn with_green(&self, green: u8) -> Self {
+        Self {
+            alpha: self.alpha,
+            red: self.red,
+            green,
+            blue: self.blue
+        }
+    }
+
+    pub fn with_blue(&self, blue: u8) -> Self {
+        Self {
+            alpha: self.alpha,
+            red: self.red,
+            green: self.green,
+            blue
+        }
+    }
 }
 
-impl XYZA {
+impl From<u32> for ARGB {
+    fn from(value: u32) -> Self {
+        Self::from_u32(value, false)
+    }
+}
+
+impl From<ARGB> for u32 {
+    fn from(value: ARGB) -> Self {
+        value.as_u32(false)
+    }
+}
+
+impl AXYZ {
     pub fn distance_euclidean(&self, other: &Self) -> f32 {
         distance_euclidean(
             (self.x, self.y, self.z), 
@@ -97,7 +174,7 @@ impl XYZA {
     }
 }
 
-impl LABA {
+impl ALAB {
     pub fn distance_euclidean(&self, other: &Self) -> f32 {
         distance_euclidean(
             (self.l, self.a, self.b), 
@@ -113,7 +190,7 @@ impl LABA {
     }
 }
 
-impl HSVA {
+impl AHSV {
     pub fn distance_euclidean(&self, other: &Self) -> f32 {
         distance_euclidean(
             (self.h, self.s, self.v), 
