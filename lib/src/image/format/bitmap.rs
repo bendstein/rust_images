@@ -517,21 +517,25 @@ impl ConvertableFrom<Image> for Bitmap {
             BitmapPixelData::Indices(color_table_indices)
         }
         else {
-            //For any other bit depth, the color table isn't necessary, and the pixel data will be the literal RGB(A) values
-            let mut img_pixels: Vec<color::ARGB> = Vec::new();
+            //For any other bit depth, the color table isn't necessary, and the pixel data will be the literal (A)RGB values
+            let img_pixels: Vec<color::ARGB> = value.iter()
+                .flat_map(|r| r.iter().copied())
+                .collect();
 
-            //Loop over each row
-            for r in 0..value.height {
-                //Bitmap is mirrored horizontally
-                let j = value.height - 1 - r;
+            // let mut img_pixels: Vec<color::ARGB> = Vec::new();
 
-                //Loop over each column
-                for i in 0..value.width {          
-                    //Get the pixel at the given index (i, j)
-                    let pixel = value.get(i, j).unwrap_or_default();
-                    img_pixels.push(pixel);
-                }
-            }
+            // //Loop over each row and push to vector
+            // for j in 0..value.height {
+            //     //Bitmap is mirrored horizontally
+            //     //let j = value.height - 1 - r;
+
+            //     //Loop over each column
+            //     for i in 0..value.width {          
+            //         //Get the pixel at the given index (i, j)
+            //         let pixel = value.get(i, j).unwrap_or_default();
+            //         img_pixels.push(pixel);
+            //     }
+            // }
 
             BitmapPixelData::Colors(img_pixels)
         };
@@ -591,10 +595,10 @@ impl ConvertableFrom<Bitmap> for Image {
 
         //For each row
         for r in 0..abs_height {
-            //If height is non-negative, the image is mirrored horizontally
+            //If height is negative, the image is mirrored horizontally
             let j = match height {
-                h if h < 0 => r,
-                _ => (abs_height - 1) - r
+                h if h < 0 => (abs_height - 1) - r,
+                _ => r
             };
 
             //For each column
@@ -620,10 +624,6 @@ impl ConvertableFrom<Bitmap> for Image {
             }
         }
 
-        Ok(Image {
-            width: abs_width as usize,
-            height: abs_height as usize,
-            pixels
-        })
+        Ok(Image::new_pixels(abs_width as usize, abs_height as usize, pixels))
     }
 }

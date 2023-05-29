@@ -11,8 +11,8 @@
             "program": "${workspaceFolder}/target/debug/console.exe",
             "preLaunchTask": "rust: cargo build",
             "args": [
-                "/path:input/bmp/img33.bmp",
-                "/output:draw"
+                "/path:input/bmp/img23.bmp",
+                "/output:write"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

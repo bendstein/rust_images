@@ -51,20 +51,16 @@ pub fn write_image_to_console(img: image::Image, settings: &WriteImageToConsoleS
     println!();
 
     //Outer loops is rows
-    for j in 0..img.height {
+    for row in &img.iter() {
         //Move to the next line
         println!();
 
-        //Inner loop is columns
-        for i in 0..img.width {
-            //Get color at location
-            let color = img.get(i, j).unwrap_or_default();
-
+        for color in row {
             //Get string corresponding to opacity
-            let pixel_string = get_pixel_string_from_opacity(color, settings);
+            let pixel_string = get_pixel_string_from_opacity(*color, settings);
 
             //Get console color from given color
-            let coloring = get_coloring(color, settings);
+            let coloring = get_coloring(*color, settings);
 
             //Apply console color to pixel string
             let colored_string = if let Some(console_color) = coloring {
