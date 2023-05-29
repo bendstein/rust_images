@@ -1,6 +1,10 @@
+use std::collections::HashMap;
+use std::collections::hash_map::Entry;
+
 use crate::{color, image, utility, convert::ConvertableFrom};
 use image::Image;
 use utility::FromBitSlice;
+use crate::constants::bitmap;
 
 ///
 /// A image in bmp format.
@@ -444,10 +448,7 @@ impl TryFrom<Bitmap> for Vec<u8> {
                     let mut bytes: Vec<u8> = Vec::new();
 
                     for color in scanline {
-                        let color_u32 = ((color.alpha as u32) << 24)
-                            + ((color.red as u32) << 16)
-                            + ((color.green as u32) << 8)
-                            + (color.blue as u32);
+                        let color_u32 = color.as_u32(false);
                         let mut color_bytes = Vec::from(color_u32.to_le_bytes());
                         color_bytes.truncate(bytes_per_pixel);
                         bytes.append(&mut color_bytes);
@@ -477,7 +478,7 @@ impl TryFrom<Bitmap> for Vec<u8> {
             value.info_header.colors_used.to_le_bytes().as_slice(),
             value.info_header.important_colors.to_le_bytes().as_slice(),
             &value.color_table.colors.iter()
-                .flat_map(|color| (((color.alpha as u32) << 24) + ((color.red as u32) << 16) + ((color.green as u32) << 8) + (color.blue as u32)).to_le_bytes())
+                .flat_map(|color| (color.as_u32(false)).to_le_bytes())
                 .collect::<Vec<u8>>(),
             &pixel_bytes].concat())
     }
@@ -493,7 +494,82 @@ impl ConvertableFrom<Image> for Bitmap {
 
     #[allow(unused_variables)]
     fn try_convert_from(value: Image, options: Self::Options) -> Result<Self, Self::Error> {
-        todo!();
+        
+        let mut color_table: HashMap<u32, u8> = HashMap::new();
+        let mut color_table_colors: Vec<color::RGBA> = Vec::new();
+
+        let pixels: BitmapPixelData = if [1, 4, 8].contains(&options.bit_depth) {
+            //For bit depth of 1, 4, or 8, construct the color table and set pixels to be indices into the color table
+            let mut color_table_indices: Vec<u8> = Vec::new();
+
+            for pixel in value.pixels {
+                let pixel_u32 = pixel.as_u32(true);
+                let color_table_len = color_table.len() as u8;
+
+                if let Entry::Vacant(e) = color_table.entry(pixel_u32) {
+                    e.insert(color_table_len);
+                    color_table_colors.push(pixel);
+                }
+
+                color_table_indices.push(*color_table.get(&pixel_u32).unwrap());
+            }
+
+            BitmapPixelData::Indices(color_table_indices)
+        }
+        else {
+            //For any other bit depth, the color table isn't necessary, and the pixel data will be the literal RGB(A) values
+            let mut img_pixels: Vec<color::RGBA> = Vec::new();
+
+            //Loop over each row
+            for r in 0..value.height {
+                //Bitmap is mirrored horizontally
+                let j = value.height - 1 - r;
+
+                //Loop over each column
+                for i in 0..value.width {          
+                    //Get the pixel at the given index (i, j)
+                    let pixel = value.get(i, j).unwrap_or_default();
+                    img_pixels.push(pixel);
+                }
+            }
+
+            BitmapPixelData::Colors(img_pixels)
+        };
+
+        let data_offset: u32 = bitmap::HEADER_SIZE + bitmap::INFO_HEADER_SIZE + (bitmap::COLOR_TABLE_SIZE_FACTOR * color_table.len() as u32);
+        
+        //The size of the actual pixel data is the number of bytes per pixel times the number of pixels in a row (rounded to a multiple of 4 for padding),
+        //times the number of rows
+        let bytes_per_pixel = f32::ceil((options.bit_depth as f32) / 8_f32) as usize;
+        let image_size = (utility::round_to_next_multiple_of_4((value.width * bytes_per_pixel) as i32) * value.height) as u32;
+
+        Ok(Bitmap { 
+            header: BitmapHeader { 
+                signature: bitmap::SIGNATURE, 
+                file_size: data_offset + image_size,
+                reserved: 0_u32,
+                data_offset
+            }, 
+            info_header: BitmapInfoHeader { 
+                size: bitmap::INFO_HEADER_SIZE, 
+                width: value.width as i32, 
+                height: value.height as i32, 
+                planes: 1, 
+                bit_depth: options.bit_depth, 
+                compression: options.compression, 
+                image_size: 0_u32, 
+                x_pixels_per_meter: 1, 
+                y_pixels_per_meter: 1, 
+                colors_used: color_table.len() as u32, 
+                important_colors: 0_u32
+            }, 
+            color_table: BitmapColorTable { 
+                colors: color_table_colors
+            }, 
+            pixels: BitmapPixels { 
+                pixels
+            }
+        })
     }
 }
 

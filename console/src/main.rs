@@ -49,7 +49,14 @@ fn main() -> Result<(), String> {
 
     match output_type {
         OutputType::WriteToFile => {
-            let reversed = Vec::try_from(bitmap)?;
+            let img = image::Image::try_convert_from(bitmap, ())?;
+
+            let bmp = Bitmap::try_convert_from(img, image::format::bitmap::BitmapConvertData {
+                bit_depth: 24,
+                compression: 0
+            })?;
+
+            let reversed = Vec::try_from(bmp)?;
 
             let time = SystemTime::now()
                 .duration_since(SystemTime::UNIX_EPOCH)
@@ -78,6 +85,13 @@ fn main() -> Result<(), String> {
                 ].contains(&truecolor_env.as_str());
 
             let img = image::Image::try_convert_from(bitmap, ())?;
+
+            let bmp = Bitmap::try_convert_from(img, image::format::bitmap::BitmapConvertData {
+                bit_depth: 24,
+                compression: 0
+            })?;
+
+            let img = image::Image::try_convert_from(bmp, ())?;
 
             let pixels: Vec<String> = constants::draw_to_console::PIXEL_STRINGS
                 .split(constants::draw_to_console::PIXEL_STRINGS_DELIMITER)

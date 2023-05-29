@@ -46,6 +46,21 @@ fn distance_manhattan(a: (f32, f32, f32), b: (f32, f32, f32)) -> f32 {
     + (a.2 - b.2).abs()
 }
 
+fn as_u32(v: (u8, u8, u8, u8), little_endian: bool) -> u32 {
+    if little_endian {
+        (v.0 as u32)
+        + ((v.1 as u32) << 8)
+        + ((v.2 as u32) << 16)
+        + ((v.3 as u32) << 24)
+    }
+    else {
+        ((v.0 as u32) << 24)
+        + ((v.1 as u32) << 16)
+        + ((v.2 as u32) << 8)
+        + (v.3 as u32)
+    }
+}
+
 impl RGBA {
     pub fn distance_euclidean(&self, other: &Self) -> f32 {
         distance_euclidean(
@@ -59,6 +74,10 @@ impl RGBA {
             (self.red as f32, self.blue as f32, self.green as f32), 
             (other.red as f32, other.blue as f32, other.green as f32)
         )
+    }
+
+    pub fn as_u32(&self, little_endian: bool) -> u32 {
+        as_u32((self.alpha, self.red, self.green, self.blue), little_endian)
     }
 }
 
