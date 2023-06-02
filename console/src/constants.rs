@@ -35,6 +35,11 @@ pub mod args {
         /// when drawing to the console
         /// 
         pub const FORCE_DISABLE_TRUECOLOR: &str = "no_truecolor";
+
+        ///
+        /// Command line argument key for output file path
+        /// 
+        pub const OUTPUT_PATH: &str = "out_path";
     }
 
     ///
@@ -94,3 +99,11 @@ pub mod write_to_console {
     /// 
     pub const PIXEL_STRINGS_DELIMITER: &str = ",";
 }
+
+// pub mod color {
+//     pub mod lab {
+//         pub const REF_X: f32 = 50_f32;
+//         pub const REF_Y: f32 = 50_f32;
+//         pub const REF_Z: f32 = 50_f32;
+//     }
+// }

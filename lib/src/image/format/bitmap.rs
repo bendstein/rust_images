@@ -172,6 +172,42 @@ pub struct BitmapConvertData {
     ///     2 = BI_RLE4 4bit RLE encoding
     ///
     pub compression: u32,
+    ///
+    /// Horizontal resolution in pixels per meter
+    /// If negative, indicates the image is mirrored
+    /// vertically.
+    ///
+    pub x_pixels_per_meter: i32,
+    ///
+    /// Vertical resolution in pixels per meter
+    /// If negative, indicates the image is mirrored
+    /// horizontally.
+    ///
+    pub y_pixels_per_meter: i32,
+}
+
+impl From<Bitmap> for BitmapConvertData {
+    fn from(value: Bitmap) -> Self {
+        Self 
+        { 
+            bit_depth: value.info_header.bit_depth, 
+            compression: value.info_header.compression,
+            x_pixels_per_meter: value.info_header.x_pixels_per_meter,
+            y_pixels_per_meter: value.info_header.y_pixels_per_meter
+        }
+    }
+}
+
+impl From<&Bitmap> for BitmapConvertData {
+    fn from(value: &Bitmap) -> Self {
+        Self 
+        { 
+            bit_depth: value.info_header.bit_depth, 
+            compression: value.info_header.compression,
+            x_pixels_per_meter: value.info_header.x_pixels_per_meter,
+            y_pixels_per_meter: value.info_header.y_pixels_per_meter
+        }
+    }
 }
 
 ///
@@ -502,16 +538,18 @@ impl ConvertableFrom<Image> for Bitmap {
             //For bit depth of 1, 4, or 8, construct the color table and set pixels to be indices into the color table
             let mut color_table_indices: Vec<u8> = Vec::new();
 
-            for pixel in value.pixels {
-                let pixel_u32 = pixel.as_u32(true);
-                let color_table_len = color_table.len() as u8;
+            for (rownum, row) in value.iter().enumerate() {
+                for pixel in row {
+                    let pixel_u32 = pixel.as_u32(true);
+                    let color_table_len = color_table.len() as u8;
 
-                if let Entry::Vacant(e) = color_table.entry(pixel_u32) {
-                    e.insert(color_table_len);
-                    color_table_colors.push(pixel);
+                    if let Entry::Vacant(e) = color_table.entry(pixel_u32) {
+                        e.insert(color_table_len);
+                        color_table_colors.push(*pixel);
+                    }
+    
+                    color_table_indices.push(*color_table.get(&pixel_u32).unwrap());
                 }
-
-                color_table_indices.push(*color_table.get(&pixel_u32).unwrap());
             }
 
             BitmapPixelData::Indices(color_table_indices)
@@ -519,6 +557,7 @@ impl ConvertableFrom<Image> for Bitmap {
         else {
             //For any other bit depth, the color table isn't necessary, and the pixel data will be the literal (A)RGB values
             let img_pixels: Vec<color::ARGB> = value.iter()
+                .rev()
                 .flat_map(|r| r.iter().copied())
                 .collect();
 
@@ -562,8 +601,8 @@ impl ConvertableFrom<Image> for Bitmap {
                 bit_depth: options.bit_depth, 
                 compression: options.compression, 
                 image_size: 0_u32, 
-                x_pixels_per_meter: 1, 
-                y_pixels_per_meter: 1, 
+                x_pixels_per_meter: options.x_pixels_per_meter,
+                y_pixels_per_meter: options.y_pixels_per_meter, 
                 colors_used: color_table.len() as u32, 
                 important_colors: 0_u32
             }, 

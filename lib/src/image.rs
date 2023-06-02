@@ -56,6 +56,10 @@ impl Image {
         self.height
     }
 
+    pub fn length(&self) -> usize {
+        self.width() * self.height()
+    }
+
     pub fn row(&self, j: usize) -> &[color::ARGB] {
         &self.pixels[(self.calculate_index(0, j))..(self.calculate_index(self.width, j))]
     }
@@ -83,23 +87,47 @@ impl<'a> ImageIterator<'a> {
         *self.row.borrow()
     }
 
-    fn increment(&self) -> usize {
-       let mut row = self.row.borrow_mut();
-       let current = *row;
-       *row += 1;
-       current
+    fn move_by(&self, n: isize) -> usize {
+        let mut row = self.row.borrow_mut();
+        let current = *row;
+
+        //Add n to row, bounding result between [0, number of rows]
+        *row = row.checked_add_signed(n)
+            .unwrap_or_else(|| if n <= 0_isize { 0_usize } else { self.image.height() })
+            .min(self.image.height());
+        current
     }
+
 }
 
 impl<'a> Iterator for &'a ImageIterator<'a> {
     type Item = &'a [color::ARGB];
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.row() >= self.image.height() {
+        self.nth(1)
+    }
+
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        if self.row() + n > self.image.height() {
             None
         }
         else {
-            Some(self.image.row(self.increment()))
+            Some(self.image.row(self.move_by(n as isize)))
+        }
+    }
+}
+
+impl<'a> DoubleEndedIterator for &'a ImageIterator<'a> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.nth_back(1)
+    }
+
+    fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
+        if self.row() + n > self.image.height() {
+            None
+        }
+        else {
+            Some(self.image.row(self.image.height() - self.move_by(n as isize) - 1))
         }
     }
 }

@@ -6,6 +6,7 @@ use std::{collections::HashMap, time::SystemTime};
 use console::WriteImageToConsoleSettings;
 use parse_args::argparser;
 use rs_image::{*, convert::ConvertableFrom};
+use image::format::bitmap;
 use image::format::bitmap::Bitmap;
 
 use crate::output_type::OutputType;
@@ -54,23 +55,24 @@ fn main() -> Result<(), String> {
 
     match output_type {
         OutputType::WriteToFile => {
-            let img = image::Image::try_convert_from(bitmap, ())?;
+            let img = image::Image::try_convert_from(bitmap.clone(), ())?;
 
-            let bmp = Bitmap::try_convert_from(img, image::format::bitmap::BitmapConvertData {
-                bit_depth: 24,
-                compression: 0
-            })?;
+            let bmp = Bitmap::try_convert_from(img, image::format::bitmap::BitmapConvertData::from(&bitmap))?;
 
             let reversed = Vec::try_from(bmp)?;
 
-            let time = SystemTime::now()
-                .duration_since(SystemTime::UNIX_EPOCH)
-                .ok()
-                .unwrap_or_default()
-                .as_millis();
-        
-            let out_path = format!("output/bmp/img{time}.bmp");
-        
+            //Get file save path from args, or use default if not present
+            let out_path = args.get(constants::args::keys::OUTPUT_PATH)
+                .map_or_else(|| {
+                    let time = SystemTime::now()
+                        .duration_since(SystemTime::UNIX_EPOCH)
+                        .ok()
+                        .unwrap_or_default()
+                        .as_millis();
+                    let out_path = format!("output/bmp/img{time}.bmp");
+                    out_path
+                }, |path| path.to_string());
+
             rs_image::utility::file::write_file_bytes(&out_path, &reversed)
                 .map_err(|err| err.to_string())?;
         
@@ -89,7 +91,18 @@ fn main() -> Result<(), String> {
                     constants::env::values::TRUECOLOR_ENABLED_TRUECOLOR
                 ].contains(&truecolor_env.as_str());
 
+            let bitmap_data = bitmap::BitmapConvertData {
+                bit_depth: 32,
+                compression: bitmap.info_header.compression,
+                x_pixels_per_meter: 1,
+                y_pixels_per_meter: 1
+            };
+
             let img = image::Image::try_convert_from(bitmap, ())?;
+
+            // let bmp = Bitmap::try_convert_from(img, bitmap_data)?;
+
+            // let img = image::Image::try_convert_from(bmp, ())?;
 
             let pixels: Vec<String> = constants::write_to_console::PIXEL_STRINGS
                 .split(constants::write_to_console::PIXEL_STRINGS_DELIMITER)

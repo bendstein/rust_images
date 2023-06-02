@@ -1,9 +1,9 @@
 pub mod bitmap {
     ///
-    /// Bitmap signature should always be ASCII BM
-    /// i.e. 0x424D
+    /// Bitmap signature should always be ASCII BM in little endian
+    /// i.e. 0x4D42
     /// 
-    pub const SIGNATURE: u16 = 0x424D;
+    pub const SIGNATURE: u16 = 0x4D42;
 
     ///
     /// The size of the DIB header, in bytes

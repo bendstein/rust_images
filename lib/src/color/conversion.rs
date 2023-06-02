@@ -2,7 +2,7 @@ use crate::convert::ConvertableFrom;
 use super::*;
 
 pub struct LABSettings {
-    refs: (f32, f32, f32)
+    pub refs: (f32, f32, f32)
 }
 
 impl ConvertableFrom<ARGB> for AXYZ {
@@ -47,8 +47,63 @@ impl ConvertableFrom<ARGB> for AHSV {
     type Error = ();
     type Options = ();
 
-    fn try_convert_from(_value: ARGB, _: Self::Options) -> Result<Self, Self::Error> {
-        todo!();
+    fn try_convert_from(value: ARGB, _: Self::Options) -> Result<Self, Self::Error> {
+        let r = (value.red as f32) / 255_f32;
+        let g = (value.green as f32) / 255_f32;
+        let b = (value.blue as f32) / 255_f32;
+
+        let min = f32::min(r, f32::min(g, b));
+        let max = f32::max(r, f32::max(g, b));
+        let delta = max - min;
+   
+        let alpha = value.alpha;
+        let v = max;
+
+        if delta == 0_f32 {
+            Ok(AHSV { 
+                h: 0_f32, 
+                s: 0_f32, 
+                v, 
+                alpha
+            })
+        }
+        else {
+            let s = delta / max;
+
+            let delta_r = (((max - r) / 6_f32) + (delta / 2_f32)) / delta;
+            let delta_g = (((max - g) / 6_f32) + (delta / 2_f32)) / delta;
+            let delta_b = (((max - b) / 6_f32) + (delta / 2_f32)) / delta;
+
+            let h = if r == max {
+                delta_b - delta_g
+            }
+            else if g == max {
+                (1_f32 / 3_f32) + delta_r - delta_b
+            }
+            else if b == max {
+                (2_f32 / 3_f32) + delta_g - delta_r
+            }
+            else {
+                0_f32
+            };
+
+            let h_adj = if h < 0_f32 {
+                h + 1_f32
+            }
+            else if h > 0_f32 {
+                h - 1_f32
+            }
+            else {
+                h
+            };
+
+            Ok(AHSV { 
+                h: h_adj, 
+                s, 
+                v, 
+                alpha
+            })
+        }
     }
 }
 

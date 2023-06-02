@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use colored::Colorize;
 use unicode_segmentation::UnicodeSegmentation;
-use rs_image::{color, image};
+use rs_image::{color, image, convert::ConvertableFrom};
 
 pub struct WriteImageToConsoleSettings {
     ///
