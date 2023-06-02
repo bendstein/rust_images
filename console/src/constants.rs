@@ -48,7 +48,7 @@ pub mod args {
     pub mod values {
         pub mod output_type {
             pub const FILE: &str = "file";
-            pub const OUTPUT: &str = "output";
+            pub const OUTPUT: &str = "console";
             pub const DRAW: &str = "draw";
         }
     }

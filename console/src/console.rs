@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use colored::Colorize;
 use unicode_segmentation::UnicodeSegmentation;
-use rs_image::{color, image, convert::ConvertableFrom};
+use rs_image::{color, image};
 
 pub struct WriteImageToConsoleSettings {
     ///
@@ -47,6 +47,10 @@ impl WriteImageToConsoleSettings {
 pub fn write_image_to_console(img: image::Image, settings: &WriteImageToConsoleSettings) {
     let _ = colored::control::set_virtual_terminal(true);
 
+    let terminal_size = termsize::get();
+
+    let pixel_len = settings.pixel_width();
+
     //Write some top padding
     println!();
 
@@ -55,7 +59,14 @@ pub fn write_image_to_console(img: image::Image, settings: &WriteImageToConsoleS
         //Move to the next line
         println!();
 
-        for color in row {
+        for (column, color) in row.iter().enumerate() {
+
+            if let Some(tsize) = &terminal_size {
+                if ((column + 1) * pixel_len) >= tsize.cols as usize {
+                    break;
+                }
+            }
+
             //Get string corresponding to opacity
             let pixel_string = get_pixel_string_from_opacity(*color, settings);
 

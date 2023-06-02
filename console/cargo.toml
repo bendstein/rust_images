@@ -10,3 +10,4 @@ parse_args = { path = "lib/arg_parser" }
 rs_image = { version = "0.1.0", path = "../lib" }
 colored = { version = "2.0.0" }
 unicode-segmentation = { version = "1.10.1" }
+termsize = { version = "0.1.6" }

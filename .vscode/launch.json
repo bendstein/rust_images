@@ -12,8 +12,8 @@
             "preLaunchTask": "rust: cargo build",
             "args": [
                 "/path:input/bmp/img14.bmp",
-                "/output:file",
-                "/out_path:output/bmp/a.bmp"
+                "/output:console",
+                //"/out_path:output/bmp/a.bmp"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
