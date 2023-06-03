@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, io::{stdout, Write}};
 use colored::Colorize;
 use unicode_segmentation::UnicodeSegmentation;
 use rs_image::{color, image};
@@ -51,13 +51,15 @@ pub fn write_image_to_console(img: image::Image, settings: &WriteImageToConsoleS
 
     let pixel_len = settings.pixel_width();
 
+    let mut stdoutlock = stdout().lock();
+
     //Write some top padding
-    println!();
+    writeln!(stdoutlock).unwrap();
 
     //Outer loops is rows
     for row in &img.iter() {
         //Move to the next line
-        println!();
+        writeln!(stdoutlock).unwrap();
 
         for (column, color) in row.iter().enumerate() {
 
@@ -83,7 +85,7 @@ pub fn write_image_to_console(img: image::Image, settings: &WriteImageToConsoleS
             };
 
             //Print colored string
-            print!("{colored_string}");
+            write!(stdoutlock, "{colored_string}").unwrap();
         }
     }
 }
