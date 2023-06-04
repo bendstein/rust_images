@@ -36,6 +36,9 @@ fn main() -> Result<(), String> {
     else if output_type_arg == *constants::args::values::output_type::OUTPUT {
         OutputType::OutputToConsole
     }
+    else if output_type_arg == *constants::args::values::output_type::HEX {
+        OutputType::OutputHex
+    }
     else {
         OutputType::default()
     };
@@ -43,8 +46,6 @@ fn main() -> Result<(), String> {
     //Get image file path from args
     let file_path = args.get(constants::args::keys::FILE_PATH)
         .map_or_else(|| Err(format!("Missing required argument: '{}'.", constants::args::keys::FILE_PATH)), Ok)?;
-
-    println!("Path: {file_path}");
 
     //Get image file bytes
     let bytes = rs_image::utility::file::get_file_bytes(file_path)
@@ -120,6 +121,11 @@ fn main() -> Result<(), String> {
         },
         OutputType::DrawToConsole => {
             todo!();
+        },
+        OutputType::OutputHex => {
+            let hex_string = bitmap.formatted_bitstring();
+            println!("{hex_string}");
+            Ok(())
         }
     }
 }

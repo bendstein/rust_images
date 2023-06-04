@@ -3,5 +3,6 @@ pub enum OutputType {
     #[default]
     OutputToConsole,
     DrawToConsole,
-    WriteToFile
+    WriteToFile,
+    OutputHex
 }

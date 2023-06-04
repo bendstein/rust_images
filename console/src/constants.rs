@@ -50,6 +50,7 @@ pub mod args {
             pub const FILE: &str = "file";
             pub const OUTPUT: &str = "console";
             pub const DRAW: &str = "draw";
+            pub const HEX: &str = "hex";
         }
     }
 }

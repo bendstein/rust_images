@@ -4,7 +4,7 @@ use super::*;
 use crate::image::*;
 
 ///
-/// Test whether 2 bitmaps are equivalent, even if their data isn't exactly
+/// Test whether 2 bitmaps are equivalent, even if the underlying data isn't exactly
 /// equal
 /// 
 fn test_equivalence(a: &Bitmap, b: &Bitmap) -> Result<(), String> {
@@ -372,7 +372,7 @@ fn input_24_1() -> (&'static [u8], Bitmap, Image) {
         0x00, 0x00, 0x00, 0x00, //Important colors = 0
 
         //Color table (omitted because bit depth 24)
-        
+
         //Pixel data
         //Row 3
         0x00, 0x00, 0x00, //Column 0

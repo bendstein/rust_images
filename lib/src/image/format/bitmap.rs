@@ -190,6 +190,9 @@ pub struct BitmapConvertData {
 }
 
 impl Bitmap {
+    ///
+    /// Get the color at index i of the color table, if it exists
+    /// 
     pub fn color_table_color(&self, i: usize) -> Option<color::ARGB> {
         if i >= self.color_table.colors.len() {
             None
@@ -197,6 +200,164 @@ impl Bitmap {
         else {
             Some(self.color_table.colors[i])
         }
+    }
+
+    pub fn formatted_bitstring(&self) -> String {
+
+        fn u16_bits(n: u16) -> [u8; 2] {
+            n.to_le_bytes()
+        }
+
+        fn u32_bits(n: u32) -> [u8; 4] {
+            n.to_le_bytes()
+        }
+
+        fn i32_bits(n: i32) -> [u8; 4] {
+            n.to_le_bytes()
+        }
+
+        fn bitstring(bits: &[u8], skip_last: usize) -> String {
+            bits.iter()
+                .take(4 - skip_last)
+                .map(|n| format!("{:#04X?},", n))
+                .reduce(|a, b| format!("{a} {b}"))
+                .unwrap()
+        }
+
+        let color_table = if self.color_table.colors.is_empty() {
+            String::from("//Empty")
+        }
+        else {
+            let mut row = -1;
+            self.color_table.colors.iter()
+                .map(|color| {
+                    row += 1;
+                    let color_u32 = color.as_u32(false);
+                    format!("{: <22} //Color table entry {row}", bitstring(&u32_bits(color_u32), 0))
+                })
+                .reduce(|a, b| format!("{a}\n{b}"))
+                .unwrap()
+        };
+
+        let pixel_data = match &self.pixels.pixels {
+            BitmapPixelData::Colors(pixels) => {
+                if pixels.is_empty() {
+                    String::from("//Empty")
+                }
+                else {
+                    let columns = self.info_header.width.unsigned_abs() as usize;
+                    let bytes_per_pixel = (self.info_header.bit_depth as f32 / 8_f32).ceil() as usize;
+                    let mut row = -1;
+                    pixels.chunks_exact(columns)
+                    .map(|scanline| {
+                        row += 1;
+                        let mut col = -1;
+
+                        let columns = scanline.iter()
+                            .map(|pixel| {
+                                col += 1;
+                                let color_u32 = if self.info_header.bit_depth < 32_u16 {
+                                    pixel.with_alpha(0_u8).as_u32(false)
+                                }
+                                else {
+                                    pixel.as_u32(false)
+                                };
+                                
+                                format!("{: <22} //Column {col}", bitstring(&u32_bits(color_u32), 4 - bytes_per_pixel))
+                            })
+                            .reduce(|a, b| format!("{a}\n{b}"))
+                            .unwrap();
+
+                        format!("//Row {row}\n{columns}")
+                    })
+                    .reduce(|a, b| format!("{a}\n\n{b}"))
+                    .unwrap()
+                }
+            },
+            BitmapPixelData::Indices(indices) => {
+                if indices.is_empty() {
+                    String::from("//Empty")
+                }
+                else {
+                    let columns = self.info_header.width.unsigned_abs() as usize;
+                    let mut row = -1;
+                    indices.chunks_exact(columns)
+                    .map(|scanline| {
+                        row += 1;
+                        let mut column = -1;
+
+                        let columns = scanline.chunks(4)
+                            .map(|index_chunk| {
+                                
+                                let column_start = column;
+
+                                let s = index_chunk.iter()
+                                    .map(|index| {
+                                        let s = bitstring(&[*index; 1], 0_usize);
+
+                                        column += 1;
+                                        s
+                                    })
+                                    .reduce(|a, b| format!("{a} {b}"))
+                                    .unwrap();
+
+                                format!("{: <22} //Columns {} - {column}", s, column_start + 1)
+                            })
+                            .reduce(|a, b| format!("{a}\n{b}"))
+                            .unwrap();
+
+                        format!("//Row {row}\n{columns}")
+                    })
+                    .reduce(|a, b| format!("{a}\n\n{b}"))
+                    .unwrap()
+                }
+            }
+        };
+
+        format!("
+//Header
+{: <22} //Signature = {}
+{: <22} //File Size = {}
+{: <22} //Reserved = {}
+{: <22} //Data Offset = {}
+
+//Info Header
+{: <22} //Info Header Size = {}
+{: <22} //Width = {}
+{: <22} //Height = {}
+{: <22} //Planes = {}
+{: <22} //Bit Depth = {}
+{: <22} //Compression = {}
+{: <22} //Image Size = {}
+{: <22} //X Resolution = {}
+{: <22} //Y Resolution = {}
+{: <22} //Colors Used = {}
+{: <22} //Important Colors = {}
+
+//Color Table
+{}
+
+//Pixel Data
+{}",
+            bitstring(&u16_bits(self.header.signature), 0), self.header.signature,
+            bitstring(&u32_bits(self.header.file_size), 0), self.header.file_size,
+            bitstring(&u32_bits(self.header.reserved), 0), self.header.reserved,
+            bitstring(&u32_bits(self.header.data_offset), 0), self.header.data_offset,
+
+            bitstring(&u32_bits(self.info_header.size), 0), self.info_header.size,
+            bitstring(&i32_bits(self.info_header.width), 0), self.info_header.width,
+            bitstring(&i32_bits(self.info_header.height), 0), self.info_header.height,
+            bitstring(&u16_bits(self.info_header.planes), 0), self.info_header.planes,
+            bitstring(&u16_bits(self.info_header.bit_depth), 0), self.info_header.bit_depth,
+            bitstring(&u32_bits(self.info_header.compression), 0), self.info_header.compression,
+            bitstring(&u32_bits(self.info_header.image_size), 0), self.info_header.image_size,
+            bitstring(&i32_bits(self.info_header.x_pixels_per_meter), 0), self.info_header.x_pixels_per_meter,
+            bitstring(&i32_bits(self.info_header.y_pixels_per_meter), 0), self.info_header.y_pixels_per_meter,
+            bitstring(&u32_bits(self.info_header.colors_used), 0), self.info_header.colors_used,
+            bitstring(&u32_bits(self.info_header.important_colors), 0), self.info_header.important_colors,
+            color_table,
+            pixel_data
+        )
     }
 }
 
