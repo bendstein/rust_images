@@ -1,6 +1,6 @@
 pub mod conversion;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct ARGB {
     pub red: u8,
     pub green: u8,

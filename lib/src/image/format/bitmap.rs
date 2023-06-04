@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 
@@ -186,6 +189,17 @@ pub struct BitmapConvertData {
     pub y_pixels_per_meter: i32,
 }
 
+impl Bitmap {
+    pub fn color_table_color(&self, i: usize) -> Option<color::ARGB> {
+        if i >= self.color_table.colors.len() {
+            None
+        }
+        else {
+            Some(self.color_table.colors[i])
+        }
+    }
+}
+
 impl From<Bitmap> for BitmapConvertData {
     fn from(value: Bitmap) -> Self {
         Self 
@@ -213,10 +227,10 @@ impl From<&Bitmap> for BitmapConvertData {
 ///
 /// Read a bmp from an array of bytes
 ///
-impl TryFrom<Vec<u8>> for Bitmap {
+impl TryFrom<&[u8]> for Bitmap {
     type Error = String;
 
-    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
         let mut offset: usize = 0;
 
         fn get_next_bytes<'a, 'b>(buffer: &'a [u8], offset: &'b mut usize, n: usize) -> &'a [u8] {
@@ -226,13 +240,13 @@ impl TryFrom<Vec<u8>> for Bitmap {
         }
 
         let next_u16 =
-            |offset: &mut usize| u16::reduce_bit_slice(get_next_bytes(&value, offset, 2));
+            |offset: &mut usize| u16::reduce_bit_slice(get_next_bytes(value, offset, 2));
 
         let next_u32 =
-            |offset: &mut usize| u32::reduce_bit_slice(get_next_bytes(&value, offset, 4));
+            |offset: &mut usize| u32::reduce_bit_slice(get_next_bytes(value, offset, 4));
 
         let next_i32 =
-            |offset: &mut usize| i32::reduce_bit_slice(get_next_bytes(&value, offset, 4));
+            |offset: &mut usize| i32::reduce_bit_slice(get_next_bytes(value, offset, 4));
 
         //File header
         let header = BitmapHeader {
@@ -267,7 +281,7 @@ impl TryFrom<Vec<u8>> for Bitmap {
         }?;
 
         let palette: Option<Vec<color::ARGB>> = if color_table_length > 0 {
-            let color_table_raw = get_next_bytes(&value, &mut offset, color_table_length);
+            let color_table_raw = get_next_bytes(value, &mut offset, color_table_length);
 
             //Each color in the pallette is 4 bytes, the first 3 representing the Blue, Green and Red intensities respectively, with the last unused or alpha
             Some(
@@ -314,7 +328,7 @@ impl TryFrom<Vec<u8>> for Bitmap {
                 }
 
                 //Get the scanline data
-                let scanline = get_next_bytes(&value, &mut offset, count);
+                let scanline = get_next_bytes(value, &mut offset, count);
 
                 // Loop over each bit in the scanline, ignoring 0-padding at the end of the scanline.
                 scanline.iter().enumerate().for_each(|(ndx, chunk)| {
@@ -371,7 +385,7 @@ impl TryFrom<Vec<u8>> for Bitmap {
                 }
 
                 //Get the scanline data
-                let scanline = get_next_bytes(&value, &mut offset, count);
+                let scanline = get_next_bytes(value, &mut offset, count);
                 let mut line: Vec<color::ARGB> = Vec::new();
 
                 // Loop over each chunk of 3/4 bytes in the scanline, ignoring 0-padding at the end of the scanline.
@@ -417,6 +431,18 @@ impl TryFrom<Vec<u8>> for Bitmap {
             color_table,
             pixels,
         })
+    }
+}
+
+///
+/// Read a bmp from an array of bytes
+///
+impl TryFrom<Vec<u8>> for Bitmap {
+    type Error = String;
+
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        let as_slice = &value[..];
+        Self::try_from(as_slice)
     }
 }
 
